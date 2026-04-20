@@ -1,9 +1,14 @@
 export default defineNuxtConfig({
+
   modules: [
     '@nuxtjs/tailwindcss',
     '@nuxtjs/supabase',
     '@nuxt/image',
   ],
+
+    nitro: {
+    preset: 'netlify'
+  },
 
   supabase: {
     // Redirect is disabled — we handle admin auth manually via PIN
