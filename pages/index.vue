@@ -17,7 +17,7 @@
       <p class="text-xs font-semibold tracking-widest text-purple-200 uppercase mb-2 relative">
         Perthshire Businesswomen's Network
       </p>
-      <h1 class="font-display text-3xl font-bold leading-tight relative">AGM 2025</h1>
+      <h1 class="font-display text-3xl font-bold leading-tight relative">AGM 2026</h1>
       <p class="text-sm text-white/70 font-light mt-1 relative">Who's in the room today?</p>
     </header>
 
