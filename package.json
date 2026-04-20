@@ -1,0 +1,19 @@
+{
+  "name": "pbwn-agm",
+  "private": true,
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview"
+  },
+  "dependencies": {
+    "@nuxt/image": "^2.0.0",
+    "@nuxtjs/supabase": "^1.3.5",
+    "nuxt": "^3.12.0"
+  },
+  "devDependencies": {
+    "@nuxtjs/tailwindcss": "^6.12.0"
+  },
+  "type": "module"
+}
