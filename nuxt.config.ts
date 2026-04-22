@@ -25,7 +25,7 @@ export default defineNuxtConfig({
 
   app: {
     head: {
-      title: 'PBWN AGM 2025',
+      title: 'PBN App',
       meta: [
         { name: 'description', content: 'Perthshire Business Women\'s Network AGM — Networking Directory' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
