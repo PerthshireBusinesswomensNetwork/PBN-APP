@@ -6,6 +6,7 @@ export interface FeedbackQuestion {
   options: string[] | null
   required: boolean
   allow_multiple: boolean
+  has_comments: boolean
 }
 
 export interface FeedbackResponse {
@@ -29,6 +30,7 @@ export function useFeedback() {
     questions.value = (data ?? []).map(q => ({
       ...q,
       allow_multiple: q.allow_multiple ?? false,
+      has_comments: q.has_comments ?? false,
     }))
     loading.value = false
   }
@@ -52,11 +54,13 @@ export function useFeedback() {
     id: string,
     question_text: string,
     options?: string[] | null,
-    allow_multiple?: boolean
+    allow_multiple?: boolean,
+    has_comments?: boolean
   ) {
     const payload: Record<string, any> = { question_text }
     if (options !== undefined) payload.options = options
     if (allow_multiple !== undefined) payload.allow_multiple = allow_multiple
+    if (has_comments !== undefined) payload.has_comments = has_comments
 
     const { error } = await supabase
       .from('feedback_questions')

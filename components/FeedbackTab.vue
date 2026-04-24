@@ -113,6 +113,16 @@
                 {{ option }}
               </button>
             </div>
+
+            <!-- Optional comments box -->
+            <div v-if="question.has_comments" class="mt-3">
+              <textarea
+                v-model="comments[question.id]"
+                rows="2"
+                placeholder="Any other comments..."
+                class="field-input resize-none"
+              />
+            </div>
           </div>
 
           <!-- Error -->
@@ -136,6 +146,7 @@
 const { questions, responses, loading, fetchQuestions, fetchResponses, submitResponse, subscribeResponses, getWordCloudData } = useFeedback()
 
 const answers = ref<Record<string, string | string[]>>({})
+const comments = ref<Record<string, string>>({})
 const submitting = ref(false)
 const submitted = ref(false)
 const errorMsg = ref('')
@@ -183,6 +194,11 @@ async function submit() {
   const serialised: Record<string, string> = {}
   Object.entries(answers.value).forEach(([k, v]) => {
     serialised[k] = Array.isArray(v) ? v.join(', ') : v
+  })
+
+  // Merge in comments keyed as `{questionId}_comments`
+  Object.entries(comments.value).forEach(([k, v]) => {
+    if (v?.trim()) serialised[`${k}_comments`] = v.trim()
   })
 
   const error = await submitResponse(serialised)

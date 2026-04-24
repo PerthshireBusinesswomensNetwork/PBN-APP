@@ -2,7 +2,7 @@
   <div class="bg-white rounded-2xl p-6 shadow-sm shadow-purple-100 border border-purple-50">
     <h2 class="font-display text-xl text-purple-700 mb-1">Admin Panel</h2>
     <p class="text-sm text-purple-400 mb-6">Organiser controls for the AGM directory.</p>
- 
+
     <!-- Locked -->
     <div v-if="!unlocked">
       <div class="text-center mb-6">
@@ -27,7 +27,7 @@
         {{ checking ? 'Checking...' : 'Unlock' }}
       </button>
     </div>
- 
+
     <!-- Unlocked -->
     <div v-else>
       <!-- Internal tabs -->
@@ -44,7 +44,7 @@
           {{ section.label }}
         </button>
       </div>
- 
+
       <!-- ── ATTENDEES SECTION ── -->
       <div v-if="activeSection === 'attendees'">
         <div class="bg-purple-50 rounded-xl p-6 text-center mb-4">
@@ -64,27 +64,27 @@
           @cancel="confirmClearAttendees = false"
         />
       </div>
- 
+
       <!-- ── FEEDBACK SECTION ── -->
       <div v-else-if="activeSection === 'feedback'">
- 
+
         <!-- Response count -->
         <div class="bg-purple-50 rounded-xl p-6 text-center mb-4">
           <div class="font-display text-5xl text-purple-500 mb-1">{{ responses.length }}</div>
           <div class="text-sm text-purple-400">Feedback responses</div>
         </div>
- 
+
         <!-- Word cloud preview -->
         <div class="border border-purple-100 rounded-xl p-4 mb-4">
           <p class="text-xs font-semibold text-purple-400 uppercase tracking-widest mb-2">Live word cloud</p>
           <WordCloud :words="getWordCloudData()" />
         </div>
- 
+
         <!-- Export feedback -->
         <button class="btn-outline mb-3" @click="exportFeedbackCSV">
           ⬇️ Export feedback responses (CSV)
         </button>
- 
+
         <!-- Clear feedback -->
         <button class="btn-danger mb-6" @click="confirmClearFeedback = true">
           🗑 Clear all feedback
@@ -95,18 +95,18 @@
           @confirm="clearFeedback"
           @cancel="confirmClearFeedback = false"
         />
- 
+
         <!-- Question editor -->
         <div class="border-t border-purple-100 pt-5 mt-2">
           <p class="text-sm font-semibold text-purple-700 mb-1">Edit questions</p>
           <p class="text-xs text-amber-500 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 mb-4">
             ⚠️ Edit these before the event. Changes take effect immediately.
           </p>
- 
+
           <div v-if="questionsLoading" class="space-y-3">
             <div v-for="n in 5" :key="n" class="h-16 bg-purple-50 rounded-xl animate-pulse" />
           </div>
- 
+
           <div v-else class="space-y-3">
             <div
               v-for="(q, index) in questions"
@@ -137,18 +137,14 @@
                   <p v-else-if="q.options" class="text-xs text-purple-400">
                     Options: {{ q.options.join(', ') }}
                   </p>
- 
+
                   <!-- Allow multiple toggle — radio questions only -->
                   <label
                     v-if="q.question_type === 'radio'"
                     class="flex items-center gap-2 cursor-pointer mt-1"
                   >
                     <div class="relative">
-                      <input
-                        type="checkbox"
-                        class="sr-only"
-                        v-model="editedAllowMultiple[q.id]"
-                      />
+                      <input type="checkbox" class="sr-only" v-model="editedAllowMultiple[q.id]" />
                       <div
                         class="w-8 h-4 rounded-full transition-colors"
                         :class="editedAllowMultiple[q.id] ? 'bg-purple-500' : 'bg-purple-200'"
@@ -160,8 +156,24 @@
                     </div>
                     <span class="text-xs text-purple-500">Allow multiple selections</span>
                   </label>
+
+                  <!-- Comments box toggle — all question types -->
+                  <label class="flex items-center gap-2 cursor-pointer mt-1">
+                    <div class="relative">
+                      <input type="checkbox" class="sr-only" v-model="editedHasComments[q.id]" />
+                      <div
+                        class="w-8 h-4 rounded-full transition-colors"
+                        :class="editedHasComments[q.id] ? 'bg-purple-500' : 'bg-purple-200'"
+                      />
+                      <div
+                        class="absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full shadow transition-transform"
+                        :class="editedHasComments[q.id] ? 'translate-x-4' : 'translate-x-0'"
+                      />
+                    </div>
+                    <span class="text-xs text-purple-500">Add comments box</span>
+                  </label>
                 </div>
- 
+
                 <button
                   class="text-xs text-purple-500 font-semibold hover:text-purple-700 transition-colors"
                   :disabled="savingQuestion === q.id"
@@ -172,25 +184,25 @@
               </div>
             </div>
           </div>
- 
+
           <p v-if="saveMsg" class="text-center text-sm text-purple-500 mt-3">{{ saveMsg }}</p>
         </div>
       </div>
- 
+
       <p v-if="actionMsg" class="text-center text-sm text-purple-500 mt-4">{{ actionMsg }}</p>
     </div>
   </div>
 </template>
- 
+
 <script setup lang="ts">
 const supabase = useSupabaseClient()
- 
+
 // Attendees
 const { attendees, fetchAttendees } = useAttendees()
- 
+
 // Feedback
 const { questions, responses, loading: questionsLoading, fetchQuestions, fetchResponses, updateQuestion, getWordCloudData } = useFeedback()
- 
+
 // UI state
 const pin = ref('')
 const pinError = ref('')
@@ -202,31 +214,33 @@ const saveMsg = ref('')
 const savingQuestion = ref<string | null>(null)
 const confirmClearAttendees = ref(false)
 const confirmClearFeedback = ref(false)
- 
-// Editable question texts — keyed by question ID
+
+// Editable question state — keyed by question ID
 const editedQuestions = ref<Record<string, string>>({})
 const editedAllowMultiple = ref<Record<string, boolean>>({})
- 
+const editedHasComments = ref<Record<string, boolean>>({})
+
 const sections = [
   { id: 'attendees', label: 'Attendees' },
   { id: 'feedback', label: 'Feedback' },
 ]
- 
+
 watch(questions, (qs) => {
   qs.forEach(q => {
     if (!editedQuestions.value[q.id]) {
       editedQuestions.value[q.id] = q.question_text
     }
     editedAllowMultiple.value[q.id] = q.allow_multiple ?? false
+    editedHasComments.value[q.id] = q.has_comments ?? false
   })
 })
- 
+
 onMounted(async () => {
   await fetchAttendees()
   await fetchQuestions()
   await fetchResponses()
 })
- 
+
 // ---- PIN ----
 async function unlock() {
   if (!pin.value) return
@@ -245,7 +259,7 @@ async function unlock() {
     checking.value = false
   }
 }
- 
+
 // ---- QUESTION EDITOR ----
 async function saveQuestion(id: string) {
   savingQuestion.value = id
@@ -254,14 +268,15 @@ async function saveQuestion(id: string) {
     id,
     editedQuestions.value[id],
     q?.options ?? undefined,
-    editedAllowMultiple.value[id]
+    editedAllowMultiple.value[id],
+    editedHasComments.value[id]
   )
   savingQuestion.value = null
   saveMsg.value = error ? 'Error saving question.' : '✓ Question saved.'
   setTimeout(() => { saveMsg.value = '' }, 3000)
   await fetchQuestions()
 }
- 
+
 function typeLabel(type: string) {
   const map: Record<string, string> = {
     word: 'word cloud',
@@ -271,7 +286,7 @@ function typeLabel(type: string) {
   }
   return map[type] ?? type
 }
- 
+
 function typeClass(type: string) {
   const map: Record<string, string> = {
     word: 'bg-purple-100 text-purple-600',
@@ -281,7 +296,7 @@ function typeClass(type: string) {
   }
   return map[type] ?? 'bg-gray-100 text-gray-500'
 }
- 
+
 // ---- ATTENDEE EXPORT ----
 function exportAttendeesCSV() {
   if (attendees.value.length === 0) { actionMsg.value = 'No attendees to export yet.'; return }
@@ -295,38 +310,48 @@ function exportAttendeesCSV() {
   ])
   downloadCSV('PBWN_AGM_2025_Attendees', headers, rows)
 }
- 
+
 async function clearAttendees() {
   const { error } = await supabase.from('attendees').delete().neq('id', '00000000-0000-0000-0000-000000000000')
   if (!error) await fetchAttendees()
   confirmClearAttendees.value = false
   actionMsg.value = error ? 'Error clearing attendees.' : 'All registrations cleared.'
 }
- 
+
 // ---- FEEDBACK EXPORT ----
 function exportFeedbackCSV() {
   if (responses.value.length === 0) { actionMsg.value = 'No feedback to export yet.'; return }
- 
+
   const headers = [
     'Submitted At',
-    ...questions.value.map((q, i) => `Q${i + 1}: ${q.question_text}`),
+    ...questions.value.flatMap((q, i) => {
+      const cols = [`Q${i + 1}: ${q.question_text}`]
+      if (q.has_comments) cols.push(`Q${i + 1} comments`)
+      return cols
+    }),
   ]
+
   const rows = responses.value.map(r => [
     new Date(r.created_at).toLocaleString('en-GB'),
-    ...questions.value.map(q => r.answers[q.id] ?? ''),
+    ...questions.value.flatMap(q => {
+      const cols = [r.answers[q.id] ?? '']
+      if (q.has_comments) cols.push(r.answers[`${q.id}_comments`] ?? '')
+      return cols
+    }),
   ])
+
   downloadCSV('PBWN_AGM_2025_Feedback', headers, rows)
 }
- 
+
 async function clearFeedback() {
   const { error } = await supabase.from('feedback_responses').delete().neq('id', '00000000-0000-0000-0000-000000000000')
   if (!error) await fetchResponses()
   confirmClearFeedback.value = false
   actionMsg.value = error ? 'Error clearing feedback.' : 'All feedback cleared.'
 }
- 
+
 // ---- HELPERS ----
-function downloadCSV(name: string, headers: string[], rows: string[][]) {
+function downloadCSV(name: string, headers: string[], rows: (string | number)[][]) {
   const csv = [headers, ...rows]
     .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
     .join('\n')
@@ -339,7 +364,7 @@ function downloadCSV(name: string, headers: string[], rows: string[][]) {
   URL.revokeObjectURL(url)
 }
 </script>
- 
+
 <style scoped>
 .field-input {
   @apply w-full px-3.5 py-2.5 border border-purple-100 rounded-xl text-sm text-purple-800 bg-purple-50
