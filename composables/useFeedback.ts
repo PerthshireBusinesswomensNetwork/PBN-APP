@@ -5,6 +5,7 @@ export interface FeedbackQuestion {
   question_type: 'word' | 'rating' | 'text' | 'radio'
   options: string[] | null
   required: boolean
+  allow_multiple: boolean
 }
 
 export interface FeedbackResponse {
@@ -25,7 +26,10 @@ export function useFeedback() {
       .from('feedback_questions')
       .select('*')
       .order('order_num')
-    questions.value = data ?? []
+    questions.value = (data ?? []).map(q => ({
+      ...q,
+      allow_multiple: q.allow_multiple ?? false,
+    }))
     loading.value = false
   }
 
@@ -44,10 +48,19 @@ export function useFeedback() {
     return error
   }
 
-  async function updateQuestion(id: string, question_text: string) {
+  async function updateQuestion(
+    id: string,
+    question_text: string,
+    options?: string[] | null,
+    allow_multiple?: boolean
+  ) {
+    const payload: Record<string, any> = { question_text }
+    if (options !== undefined) payload.options = options
+    if (allow_multiple !== undefined) payload.allow_multiple = allow_multiple
+
     const { error } = await supabase
       .from('feedback_questions')
-      .update({ question_text })
+      .update(payload)
       .eq('id', id)
     return error
   }

@@ -81,8 +81,8 @@
               />
             </div>
 
-            <!-- Radio -->
-            <div v-else-if="question.question_type === 'radio'" class="flex flex-wrap gap-2">
+            <!-- Radio — single select -->
+            <div v-else-if="question.question_type === 'radio' && !question.allow_multiple" class="flex flex-wrap gap-2">
               <button
                 v-for="option in question.options"
                 :key="option"
@@ -92,6 +92,23 @@
                   ? 'bg-purple-500 text-white border-purple-500'
                   : 'bg-purple-50 text-purple-600 border-purple-100 hover:border-purple-300'"
                 @click="answers[question.id] = option"
+              >
+                {{ option }}
+              </button>
+            </div>
+
+            <!-- Radio — multi select -->
+            <div v-else-if="question.question_type === 'radio' && question.allow_multiple" class="flex flex-wrap gap-2">
+              <p class="w-full text-xs text-purple-400 -mt-1 mb-1">Select all that apply</p>
+              <button
+                v-for="option in question.options"
+                :key="option"
+                type="button"
+                class="px-4 py-2 rounded-xl text-sm font-medium border transition-all"
+                :class="isChecked(question.id, option)
+                  ? 'bg-purple-500 text-white border-purple-500'
+                  : 'bg-purple-50 text-purple-600 border-purple-100 hover:border-purple-300'"
+                @click="toggleCheckbox(question.id, option)"
               >
                 {{ option }}
               </button>
@@ -118,7 +135,7 @@
 <script setup lang="ts">
 const { questions, responses, loading, fetchQuestions, fetchResponses, submitResponse, subscribeResponses, getWordCloudData } = useFeedback()
 
-const answers = ref<Record<string, string>>({})
+const answers = ref<Record<string, string | string[]>>({})
 const submitting = ref(false)
 const submitted = ref(false)
 const errorMsg = ref('')
@@ -128,23 +145,47 @@ const responseCount = computed(() => responses.value.length)
 
 // Enforce single word — strip spaces
 function enforceOneWord(id: string) {
-  answers.value[id] = answers.value[id].replace(/\s+/g, '')
+  const v = answers.value[id]
+  if (typeof v === 'string') answers.value[id] = v.replace(/\s+/g, '')
+}
+
+// Multi-select helpers
+function isChecked(id: string, option: string): boolean {
+  const v = answers.value[id]
+  return Array.isArray(v) && v.includes(option)
+}
+
+function toggleCheckbox(id: string, option: string) {
+  const current = answers.value[id]
+  const arr = Array.isArray(current) ? [...current] : []
+  const idx = arr.indexOf(option)
+  idx === -1 ? arr.push(option) : arr.splice(idx, 1)
+  answers.value[id] = arr
+}
+
+function hasAnswer(id: string): boolean {
+  const v = answers.value[id]
+  return Array.isArray(v) ? v.length > 0 : !!v?.trim()
 }
 
 async function submit() {
   errorMsg.value = ''
 
-  // Check required questions
-  const missing = questions.value.filter(
-    q => q.required && !answers.value[q.id]?.trim()
-  )
+  const missing = questions.value.filter(q => q.required && !hasAnswer(q.id))
   if (missing.length > 0) {
     errorMsg.value = `Please answer the required question${missing.length > 1 ? 's' : ''}.`
     return
   }
 
   submitting.value = true
-  const error = await submitResponse(answers.value)
+
+  // Serialise arrays to comma-separated strings before storing
+  const serialised: Record<string, string> = {}
+  Object.entries(answers.value).forEach(([k, v]) => {
+    serialised[k] = Array.isArray(v) ? v.join(', ') : v
+  })
+
+  const error = await submitResponse(serialised)
   if (error) {
     errorMsg.value = 'Something went wrong. Please try again.'
   } else {
@@ -157,6 +198,14 @@ async function submit() {
 onMounted(async () => {
   await fetchQuestions()
   await fetchResponses()
+
+  // Pre-init multi-select questions as empty arrays
+  questions.value.forEach(q => {
+    if (q.question_type === 'radio' && q.allow_multiple) {
+      answers.value[q.id] = []
+    }
+  })
+
   const channel = subscribeResponses()
   onUnmounted(() => { channel.unsubscribe() })
 })
