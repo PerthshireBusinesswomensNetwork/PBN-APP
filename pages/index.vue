@@ -24,16 +24,20 @@
     <!-- Tabs -->
     <nav class="flex bg-white border-b-2 border-purple-100 sticky top-0 z-50 shadow-sm">
       <button
-        v-for="tab in tabs"
-        :key="tab.id"
-        class="flex-1 py-3.5 text-xs font-semibold tracking-wide transition-colors border-b-[3px] -mb-[2px]"
-        :class="activeTab === tab.id
-          ? 'text-purple-500 border-purple-500'
-          : 'text-purple-300 border-transparent hover:text-purple-400'"
-        @click="activeTab = tab.id"
-      >
-        {{ tab.label }}
-      </button>
+  v-for="tab in tabs"
+  :key="tab.id"
+  class="flex-1 py-3.5 text-md font-semibold tracking-wide transition-colors border-b-[3px] -mb-[2px]"
+  :class="tab.id === 'feedback'
+    ? activeTab === 'feedback'
+      ? 'text-pink-600 border-pink-600'
+      : 'text-pink-500 border-transparent hover:text-pink-400'
+    : activeTab === tab.id
+      ? 'text-purple-500 border-purple-500'
+      : 'text-purple-300 border-transparent hover:text-purple-400'"
+  @click="activeTab = tab.id"
+>
+  {{ tab.label }}
+</button>
     </nav>
 
     <!-- Tab Content -->
